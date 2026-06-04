@@ -1,24 +1,28 @@
+import { redirect } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import TopInvestors from "@/components/leaderboard/TopInvestors";
 import LeaderboardTable from "@/components/leaderboard/LeaderboardTable";
+import PageHeader from "@/components/ui/PageHeader";
+import { getCurrentUser } from "@/lib/session";
+import { connectDB } from "@/lib/mongodb";
+import { getLeaderboard } from "@/services/leaderboard.service";
 
-export default function LeaderboardPage() {
+export default async function LeaderboardPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  await connectDB();
+  const investors = await getLeaderboard(user.id);
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div>
-          <h1 className="text-4xl font-bold">
-            Leaderboard
-          </h1>
-
-          <p className="mt-2 text-zinc-400">
-            Compete with investors and climb the rankings.
-          </p>
-        </div>
-
-        <TopInvestors />
-
-        <LeaderboardTable />
+        <PageHeader
+          title="Leaderboard"
+          description="Global rankings — compete and climb toward Market Wizard."
+        />
+        <TopInvestors investors={investors} />
+        <LeaderboardTable investors={investors} />
       </div>
     </DashboardLayout>
   );

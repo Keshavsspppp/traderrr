@@ -1,9 +1,21 @@
+import dns from "dns";
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+function configureDnsForMongoSrv(uri: string) {
+  if (!uri.startsWith("mongodb+srv://")) {
+    return;
+  }
 
-if (!MONGODB_URI) {
-  throw new Error("MONGODB_URI is missing");
+  // Router/local DNS often refuses SRV lookups for Node's c-ares resolver on Windows.
+  dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+}
+
+function getMongoUri() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error("MONGODB_URI is missing");
+  }
+  return uri;
 }
 
 declare global {
@@ -28,7 +40,9 @@ export async function connectDB() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI);
+    const uri = getMongoUri();
+    configureDnsForMongoSrv(uri);
+    cached.promise = mongoose.connect(uri);
   }
 
   cached.conn = await cached.promise;

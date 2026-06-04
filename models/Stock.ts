@@ -5,40 +5,22 @@ export interface IStock extends Document {
   companyName: string;
   sector: string;
   currentPrice: number;
+  previousClose: number;
+  changePercent: number;
   marketCap: number;
 }
 
 const StockSchema = new Schema(
   {
-    symbol: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-
-    companyName: {
-      type: String,
-      required: true,
-    },
-
-    sector: {
-      type: String,
-      required: true,
-    },
-
-    currentPrice: {
-      type: Number,
-      required: true,
-    },
-
-    marketCap: {
-      type: Number,
-      default: 0,
-    },
+    symbol: { type: String, required: true, unique: true },
+    companyName: { type: String, required: true },
+    sector: { type: String, required: true },
+    currentPrice: { type: Number, required: true },
+    previousClose: { type: Number, required: true },
+    changePercent: { type: Number, default: 0 },
+    marketCap: { type: Number, default: 0 },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.models.Stock ||

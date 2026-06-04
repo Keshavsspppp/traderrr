@@ -1,21 +1,26 @@
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || "secret";
+const JWT_SECRET = process.env.JWT_SECRET;
 
-export function signToken(
-  payload: object
-) {
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: "7d",
-  });
+if (!JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET is required in production");
 }
 
-export function verifyToken(
-  token: string
-) {
+const secret = JWT_SECRET || "dev-only-secret-change-me";
+
+export interface JwtPayload {
+  userId: string;
+  email: string;
+  role: string;
+}
+
+export function signToken(payload: JwtPayload): string {
+  return jwt.sign(payload, secret, { expiresIn: "7d" });
+}
+
+export function verifyToken(token: string): JwtPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, secret) as JwtPayload;
   } catch {
     return null;
   }

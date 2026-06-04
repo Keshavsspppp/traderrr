@@ -1,39 +1,39 @@
+import { redirect } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import PortfolioStats from "@/components/dashboard/PortfolioStats";
+import { PortfolioOverview } from "@/components/dashboard/PortfolioOverview";
 import PortfolioGrowthChart from "@/components/dashboard/PortfolioGrowthChart";
 import AIInsightCard from "@/components/dashboard/AIInsightCard";
 import RecentTrades from "@/components/dashboard/RecentTrades";
+import PageHeader from "@/components/ui/PageHeader";
+import { getCurrentUser } from "@/lib/session";
+import { connectDB } from "@/lib/mongodb";
+import { getDashboardData } from "@/services/dashboard.service";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  await connectDB();
+  const data = await getDashboardData(user.id);
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-bold">
-            Welcome Back, Keshav 👋
-          </h1>
-
-          <p className="mt-2 text-zinc-400">
-            Monitor your investments, portfolio performance,
-            and AI insights in one place.
-          </p>
-        </div>
-
-        {/* Stats */}
-        <PortfolioStats />
-
-        {/* Chart + AI */}
+        <PageHeader
+          title={`Welcome back, ${user.name.split(" ")[0]}`}
+          description="Monitor portfolio performance, AI insights, and recent trades in one place."
+        />
+        <PortfolioOverview
+          portfolio={data.portfolio}
+          globalRank={data.globalRank}
+        />
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <PortfolioGrowthChart />
+            <PortfolioGrowthChart chartData={data.chartData} />
           </div>
-
-          <AIInsightCard />
+          <AIInsightCard insight={data.aiInsight} />
         </div>
-
-        {/* Trades */}
-        <RecentTrades />
+        <RecentTrades trades={data.recentTrades} />
       </div>
     </DashboardLayout>
   );

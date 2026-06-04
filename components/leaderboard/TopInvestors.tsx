@@ -1,69 +1,38 @@
 import { Crown, Medal, Trophy } from "lucide-react";
+import { formatCurrency, formatPercent } from "@/lib/format";
 
-const topInvestors = [
-  {
-    rank: 1,
-    name: "Rahul Sharma",
-    return: "+42.6%",
-    icon: Crown,
-    color: "text-yellow-400",
-  },
-  {
-    rank: 2,
-    name: "Priya Patel",
-    return: "+38.2%",
-    icon: Trophy,
-    color: "text-zinc-300",
-  },
-  {
-    rank: 3,
-    name: "Aman Verma",
-    return: "+35.4%",
-    icon: Medal,
-    color: "text-amber-600",
-  },
-];
+export type InvestorRank = {
+  rank: number;
+  name: string;
+  portfolioValue: number;
+  returns: number;
+};
 
-export default function TopInvestors() {
+const icons = [Crown, Trophy, Medal];
+const colors = ["text-yellow-400", "text-zinc-300", "text-amber-600"];
+
+export default function TopInvestors({ investors }: { investors: InvestorRank[] }) {
+  const top3 = investors.slice(0, 3);
+
   return (
     <div className="grid gap-6 md:grid-cols-3">
-      {topInvestors.map((investor) => (
-        <div
-          key={investor.rank}
-          className="
-            rounded-3xl
-            border
-            border-white/10
-            bg-white/5
-            p-6
-            backdrop-blur-xl
-          "
-        >
-          <div className="flex items-center justify-between">
-            <div
-              className={investor.color}
-            >
-              <investor.icon size={34} />
+      {top3.map((investor, i) => {
+        const Icon = icons[i] ?? Trophy;
+        return (
+          <div
+            key={investor.rank}
+            className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl"
+          >
+            <div className="flex items-center justify-between">
+              <Icon size={34} className={colors[i]} />
+              <span className="text-3xl font-bold">#{investor.rank}</span>
             </div>
-
-            <span className="text-3xl font-bold">
-              #{investor.rank}
-            </span>
+            <h3 className="mt-6 text-xl font-semibold">{investor.name}</h3>
+            <p className="mt-2 text-lg text-green-400">{formatPercent(investor.returns)}</p>
+            <p className="mt-1 text-sm text-zinc-400">{formatCurrency(investor.portfolioValue)}</p>
           </div>
-
-          <h3 className="mt-6 text-xl font-semibold">
-            {investor.name}
-          </h3>
-
-          <p className="mt-2 text-green-400 text-lg">
-            {investor.return}
-          </p>
-
-          <p className="mt-1 text-zinc-400">
-            Portfolio Return
-          </p>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

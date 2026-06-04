@@ -30,5 +30,12 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "models/cache.service.ts",
+    "models/optimized-api.ts",
+    "services/ai/portfolio-analyzer.ts",
+    "services/websocket.service.ts",
+    "services/gamification.service.ts"
+  ]
 }

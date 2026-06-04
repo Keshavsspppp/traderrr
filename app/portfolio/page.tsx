@@ -1,29 +1,51 @@
+import { redirect } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import PerformanceCard from "@/components/portfolio/PerformanceCard";
 import AllocationChart from "@/components/portfolio/AllocationChart";
 import HoldingsTable from "@/components/portfolio/HoldingsTable";
+import PageHeader from "@/components/ui/PageHeader";
+import { getCurrentUser } from "@/lib/session";
+import { connectDB } from "@/lib/mongodb";
+import { requireUser } from "@/lib/api-auth";
+import {
+  getHoldingsForUser,
+  getAllocationBySector,
+  getRoiPercent,
+  computePortfolioValue,
+} from "@/services/portfolio.service";
+import { INITIAL_VIRTUAL_CASH } from "@/lib/constants";
 
-export default function PortfolioPage() {
+export default async function PortfolioPage() {
+  const sessionUser = await getCurrentUser();
+  if (!sessionUser) redirect("/login");
+
+  await connectDB();
+  const user = await requireUser();
+  const userId = user._id.toString();
+  const holdings = await getHoldingsForUser(userId);
+  const totalValue = await computePortfolioValue(user);
+  const invested = holdings.reduce((s, h) => s + h.invested, 0);
+  const allocation = getAllocationBySector(holdings);
+
+  const performance = {
+    portfolioValue: totalValue,
+    investedAmount: invested || INITIAL_VIRTUAL_CASH - user.cashBalance,
+    totalProfit: totalValue - INITIAL_VIRTUAL_CASH,
+    roi: getRoiPercent(totalValue),
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div>
-          <h1 className="text-4xl font-bold">
-            Portfolio
-          </h1>
-
-          <p className="mt-2 text-zinc-400">
-            Track holdings, allocation, and portfolio performance.
-          </p>
-        </div>
-
-        <PerformanceCard />
-
+        <PageHeader
+          title="Portfolio"
+          description="Holdings, sector allocation, and performance metrics for your virtual investments."
+        />
+        <PerformanceCard performance={performance} />
         <div className="grid gap-6 lg:grid-cols-3">
-          <AllocationChart />
-
+          <AllocationChart allocation={allocation} />
           <div className="lg:col-span-2">
-            <HoldingsTable />
+            <HoldingsTable holdings={holdings} />
           </div>
         </div>
       </div>

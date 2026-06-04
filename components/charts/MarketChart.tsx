@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  LineChart,
-  Line,
-  ResponsiveContainer,
-} from "recharts";
+import { LineChart, Line } from "recharts";
+import ChartContainer from "@/components/charts/ChartContainer";
 
 const data = [
   { value: 10 },
@@ -18,8 +15,8 @@ const data = [
 
 export default function MarketChart() {
   return (
-    <div className="absolute inset-0 opacity-20">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-full w-full opacity-20">
+      <ChartContainer minHeight={288}>
         <LineChart data={data}>
           <Line
             type="monotone"
@@ -29,7 +26,7 @@ export default function MarketChart() {
             dot={false}
           />
         </LineChart>
-      </ResponsiveContainer>
+      </ChartContainer>
     </div>
   );
 }

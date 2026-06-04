@@ -1,12 +1,11 @@
 "use client";
 
-import {
-  Bell,
-  Search,
-  TrendingUp,
-} from "lucide-react";
+import { Bell, Search, TrendingUp } from "lucide-react";
+import { useUser } from "@/components/providers/UserProvider";
 
 export default function Navbar() {
+  const { user } = useUser();
+  const initial = user?.name?.charAt(0)?.toUpperCase() ?? "?";
   return (
     <header
       className="
@@ -34,7 +33,7 @@ export default function Navbar() {
             bg-white/5
             px-4
             py-3
-            w-[320px]
+            w-full max-w-[280px] sm:max-w-[320px]
           "
         >
           <Search
@@ -132,17 +131,12 @@ export default function Navbar() {
                 text-black
               "
             >
-              K
+              {initial}
             </div>
 
             <div className="hidden md:block">
-              <h4 className="text-sm font-medium">
-                Keshav
-              </h4>
-
-              <p className="text-xs text-zinc-400">
-                Investor
-              </p>
+              <h4 className="text-sm font-medium">{user?.name ?? "Investor"}</h4>
+              <p className="text-xs text-zinc-400">{user?.levelTitle ?? "Investor"}</p>
             </div>
           </div>
         </div>

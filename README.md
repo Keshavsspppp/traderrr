@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# InvestArena
 
-## Getting Started
+Virtual stock market simulator — learn investing, trade with ₹10L virtual capital, and compete on leaderboards.
 
-First, run the development server:
+## Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy environment variables:
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local`:
+
+- `MONGODB_URI` — MongoDB connection string
+- `JWT_SECRET` — long random string for signing auth tokens
+- `TWELVE_DATA_API_KEY` or `ALPHA_VANTAGE_API_KEY` — live NSE/BSE stock quotes (optional; see `.env.example`)
+
+3. Seed the database (stocks):
+
+```bash
+npm run seed
+```
+
+4. (Optional) Pull live prices into MongoDB — requires a [Twelve Data](https://twelvedata.com/) or [Alpha Vantage](https://www.alphavantage.co/) API key in `.env.local`:
+
+```bash
+npm run sync-market
+```
+
+The market page auto-refreshes every 60 seconds and gradually updates stale symbols when live data is enabled.
+
+Optional demo account:
+
+```bash
+npm run seed -- --demo-user
+```
+
+Demo login: `demo@investarena.com` / `demo12345`
+
+5. Run the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Register / login with JWT (HTTP-only cookie)
+- Protected dashboard, market, portfolio, leaderboard, profile
+- Buy and sell stocks (updates cash, holdings, transactions)
+- Leaderboard ranked by portfolio value
+- XP, investor levels, and achievements
+- Rule-based AI portfolio insights on the dashboard
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run seed` | Seed stocks into MongoDB |
+| `npm run sync-market` | Fetch live quotes from Twelve Data / Alpha Vantage |

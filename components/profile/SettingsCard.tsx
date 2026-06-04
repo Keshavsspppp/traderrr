@@ -1,96 +1,28 @@
-"use client";
+import type { SafeUser } from "@/lib/session";
 
-export default function SettingsCard() {
+export default function SettingsCard({ user }: { user: SafeUser }) {
   return (
-    <div
-      className="
-      rounded-3xl
-      border
-      border-white/10
-      bg-white/5
-      p-6
-      backdrop-blur-xl
-    "
-    >
-      <h2 className="mb-6 text-2xl font-semibold">
-        Account Settings
-      </h2>
-
-      <div className="space-y-5">
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+      <h2 className="mb-6 text-2xl font-semibold">Account</h2>
+      <div className="space-y-4">
         <div>
-          <label className="mb-2 block text-sm text-zinc-400">
-            Full Name
-          </label>
-
-          <input
-            type="text"
-            defaultValue="Keshav Prasad"
-            className="
-              w-full
-              rounded-xl
-              border
-              border-white/10
-              bg-black/20
-              p-3
-              outline-none
-            "
-          />
+          <label className="text-sm text-zinc-400">Name</label>
+          <p className="mt-1 font-medium">{user.name}</p>
         </div>
-
         <div>
-          <label className="mb-2 block text-sm text-zinc-400">
-            Email
-          </label>
-
-          <input
-            type="email"
-            defaultValue="keshav@example.com"
-            className="
-              w-full
-              rounded-xl
-              border
-              border-white/10
-              bg-black/20
-              p-3
-              outline-none
-            "
-          />
+          <label className="text-sm text-zinc-400">Email</label>
+          <p className="mt-1 font-medium">{user.email}</p>
         </div>
-
         <div>
-          <label className="mb-2 block text-sm text-zinc-400">
-            Investor Bio
-          </label>
-
-          <textarea
-            rows={4}
-            placeholder="Tell others about your investing style..."
-            className="
-              w-full
-              rounded-xl
-              border
-              border-white/10
-              bg-black/20
-              p-3
-              outline-none
-            "
-          />
+          <label className="text-sm text-zinc-400">Role</label>
+          <p className="mt-1 font-medium">{user.role}</p>
         </div>
-
-        <button
-          className="
-            w-full
-            rounded-xl
-            bg-green-500
-            py-3
-            font-semibold
-            text-black
-            transition
-            hover:bg-green-400
-          "
-        >
-          Save Changes
-        </button>
+        <div>
+          <label className="text-sm text-zinc-400">Available Cash</label>
+          <p className="mt-1 font-medium text-green-400">
+            ₹{user.cashBalance.toLocaleString("en-IN")}
+          </p>
+        </div>
       </div>
     </div>
   );
