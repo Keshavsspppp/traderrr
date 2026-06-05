@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import TopInvestors from "@/components/leaderboard/TopInvestors";
 import LeaderboardTable from "@/components/leaderboard/LeaderboardTable";
+import ContestsComingSoon from "@/components/leaderboard/ContestsComingSoon";
 import PageHeader from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
@@ -21,6 +22,7 @@ export default async function LeaderboardPage() {
           title="Leaderboard"
           description="Global rankings — compete and climb toward Market Wizard."
         />
+        <ContestsComingSoon />
         <TopInvestors investors={investors} />
         <LeaderboardTable investors={investors} />
       </div>

@@ -10,7 +10,7 @@ Virtual stock market simulator — learn investing, trade with ₹10L virtual ca
 npm install
 ```
 
-2. Copy environment variables:
+2. Copy environment variables (**put real API keys in `.env.local`, not `.env.example`**):
 
 ```bash
 cp .env.example .env.local
@@ -20,7 +20,9 @@ Edit `.env.local`:
 
 - `MONGODB_URI` — MongoDB connection string
 - `JWT_SECRET` — long random string for signing auth tokens
-- `TWELVE_DATA_API_KEY` or `ALPHA_VANTAGE_API_KEY` — live NSE/BSE stock quotes (optional; see `.env.example`)
+- `GROQ_API_KEY` — [Groq Console](https://console.groq.com/keys) key for AI Portfolio Mentor (recommended; generous free tier)
+- `GEMINI_API_KEY` — optional fallback via [Google AI Studio](https://aistudio.google.com/apikey)
+- `TWELVE_DATA_API_KEY` and/or `ALPHA_VANTAGE_API_KEY` — live quotes (both can be set; Twelve Data first, Alpha Vantage fallback)
 
 3. Seed the database (stocks):
 
@@ -28,13 +30,11 @@ Edit `.env.local`:
 npm run seed
 ```
 
-4. (Optional) Pull live prices into MongoDB — requires a [Twelve Data](https://twelvedata.com/) or [Alpha Vantage](https://www.alphavantage.co/) API key in `.env.local`:
+4. (Optional) Pull live prices into MongoDB:
 
 ```bash
 npm run sync-market
 ```
-
-The market page auto-refreshes every 60 seconds and gradually updates stale symbols when live data is enabled.
 
 Optional demo account:
 
@@ -52,14 +52,24 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Running without optional API keys
+
+| Feature | Without API key |
+|---------|-----------------|
+| **Market prices** | Seeded static prices. Market shows **Seeded data**; prices still **tick live** via SSE simulation. |
+| **AI Mentor** | Rule-based fallback. Add `GROQ_API_KEY` (recommended) or `GEMINI_API_KEY` for real LLM analysis. |
+| **Everything else** | Auth, trading, limit/stop orders, leaderboard work normally. |
+
 ## Features
 
-- Register / login with JWT (HTTP-only cookie)
-- Protected dashboard, market, portfolio, leaderboard, profile
-- Buy and sell stocks (updates cash, holdings, transactions)
-- Leaderboard ranked by portfolio value
-- XP, investor levels, and achievements
-- Rule-based AI portfolio insights on the dashboard
+- **AI Portfolio Mentor** — Groq Llama (or Gemini/Anthropic/OpenAI fallback)
+- **Live price ticks** — SSE stream updates every 3s on Market page
+- **Limit & stop-loss orders** — pending until price is hit
+- Register / login with JWT + Zustand client auth state
+- Watchlist on market + dashboard
+- Reset portfolio on profile page
+- Mobile bottom navigation
+- Daily snapshot cron at `GET /api/cron/snapshots`
 
 ## Scripts
 
@@ -69,3 +79,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run build` | Production build |
 | `npm run seed` | Seed stocks into MongoDB |
 | `npm run sync-market` | Fetch live quotes from Twelve Data / Alpha Vantage |
+
+## Cron: daily portfolio snapshots
+
+`GET /api/cron/snapshots` with `Authorization: Bearer <CRON_SECRET>` once per day.

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function LoginForm() {
   const [loading, setLoading] = useState(false);
@@ -32,6 +33,9 @@ export default function LoginForm() {
       if (!res.ok) {
         toast.error(json.error ?? "Login failed");
         return;
+      }
+      if (json.user) {
+        useAuthStore.getState().login(json.user);
       }
       toast.success("Welcome back!");
       router.push("/dashboard");

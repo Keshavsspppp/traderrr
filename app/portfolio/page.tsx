@@ -3,6 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import PerformanceCard from "@/components/portfolio/PerformanceCard";
 import AllocationChart from "@/components/portfolio/AllocationChart";
 import HoldingsTable from "@/components/portfolio/HoldingsTable";
+import PendingOrdersPanel from "@/components/portfolio/PendingOrdersPanel";
 import PageHeader from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
@@ -42,6 +43,7 @@ export default async function PortfolioPage() {
           description="Holdings, sector allocation, and performance metrics for your virtual investments."
         />
         <PerformanceCard performance={performance} />
+        <PendingOrdersPanel />
         <div className="grid gap-6 lg:grid-cols-3">
           <AllocationChart allocation={allocation} />
           <div className="lg:col-span-2">

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { requireUser } from "@/lib/api-auth";
 import { apiHandler } from "@/lib/errors";
-import { isLiveMarketEnabled } from "@/lib/market-data";
+import { getMarketDataProviders, isLiveMarketEnabled } from "@/lib/market-data";
 import Stock from "@/models/Stock";
 import { ensureFreshMarketData } from "@/services/market-sync.service";
 
@@ -38,6 +38,7 @@ export const GET = apiHandler(async () => {
     topGainers: sorted.slice(0, 4),
     topLosers: [...mapped].sort((a, b) => a.changePercent - b.changePercent).slice(0, 4),
     live: isLiveMarketEnabled(),
+    providers: getMarketDataProviders().map((p) => p.name),
     lastUpdated: lastUpdated?.toISOString() ?? null,
     sync: syncMeta,
   });

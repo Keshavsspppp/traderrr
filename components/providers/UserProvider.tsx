@@ -1,62 +1,44 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import type { SafeUser } from "@/lib/session";
-
-type UserContextValue = {
-  user: SafeUser | null;
-  loading: boolean;
-  refresh: () => Promise<void>;
-  logout: () => Promise<void>;
-};
-
-const UserContext = createContext<UserContextValue | null>(null);
+import { useCallback, useEffect } from "react";
+import { useAuthStore } from "@/stores/authStore";
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<SafeUser | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/me");
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const hydrate = useAuthStore((s) => s.hydrate);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    hydrate();
+  }, [hydrate]);
 
-  const logout = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
-    window.location.href = "/login";
-  }, []);
-
-  return (
-    <UserContext.Provider value={{ user, loading, refresh, logout }}>
-      {children}
-    </UserContext.Provider>
-  );
+  return <>{children}</>;
 }
 
 export function useUser() {
-  const ctx = useContext(UserContext);
-  if (!ctx) throw new Error("useUser must be used within UserProvider");
-  return ctx;
+  const user = useAuthStore((s) => s.user);
+  const loading = useAuthStore((s) => s.loading);
+  const hydrate = useAuthStore((s) => s.hydrate);
+  const logoutStore = useAuthStore((s) => s.logout);
+
+  const refresh = useCallback(async () => {
+    await hydrate();
+  }, [hydrate]);
+
+  const logout = useCallback(async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    logoutStore();
+    window.location.href = "/login";
+  }, [logoutStore]);
+
+  return { user, loading, refresh, logout };
+}
+
+export function useAuth() {
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const loading = useAuthStore((s) => s.loading);
+  const login = useAuthStore((s) => s.login);
+  const logout = useAuthStore((s) => s.logout);
+  const hydrate = useAuthStore((s) => s.hydrate);
+
+  return { user, isAuthenticated, loading, login, logout, hydrate };
 }

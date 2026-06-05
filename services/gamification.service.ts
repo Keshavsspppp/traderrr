@@ -26,16 +26,16 @@ export function getXpProgress(xp: number, level: number) {
   return { current: xp, next: nextThreshold, percent: Math.min(100, Math.max(0, percent)) };
 }
 
-async function getLeaderboardRank(userId: string): Promise<number> {
-  const users = await User.find().sort({ totalPortfolioValue: -1 }).select("_id");
-  const idx = users.findIndex((u) => u._id.toString() === userId);
-  return idx === -1 ? users.length + 1 : idx + 1;
+async function getLeaderboardRank(user: IUser): Promise<number> {
+  const higher = await User.countDocuments({
+    totalPortfolioValue: { $gt: user.totalPortfolioValue },
+  });
+  return higher + 1;
 }
 
 export async function processAchievements(user: IUser) {
-  const userId = user._id.toString();
   const tradeCount = await Transaction.countDocuments({ userId: user._id });
-  const rank = await getLeaderboardRank(userId);
+  const rank = await getLeaderboardRank(user);
   const roi = getRoiPercent(user.totalPortfolioValue);
 
   const checks: { id: string; met: boolean }[] = [

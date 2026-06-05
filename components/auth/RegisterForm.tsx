@@ -10,6 +10,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { registerSchema } from "@/lib/validations/auth";
+import { useAuthStore } from "@/stores/authStore";
 
 type FormData = z.infer<typeof registerSchema>;
 
@@ -41,6 +42,9 @@ export default function RegisterForm() {
       if (!res.ok) {
         toast.error(json.error ?? "Registration failed");
         return;
+      }
+      if (json.user) {
+        useAuthStore.getState().login(json.user);
       }
       toast.success("Account created!");
       router.push("/dashboard");

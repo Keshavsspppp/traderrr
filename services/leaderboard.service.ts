@@ -21,10 +21,20 @@ export async function getLeaderboard(currentUserId?: string) {
   });
 }
 
-export async function getCurrentUserRank(userId: string) {
-  const users = await User.find().sort({ totalPortfolioValue: -1 }).select("_id");
-  const idx = users.findIndex((u) => u._id.toString() === userId);
-  return idx === -1 ? users.length + 1 : idx + 1;
+export async function getCurrentUserRank(
+  userId: string,
+  portfolioValue?: number
+) {
+  let value = portfolioValue;
+  if (value == null) {
+    const user = await User.findById(userId).select("totalPortfolioValue");
+    if (!user) return 1;
+    value = user.totalPortfolioValue;
+  }
+  const higher = await User.countDocuments({
+    totalPortfolioValue: { $gt: value },
+  });
+  return higher + 1;
 }
 
 export function formatReturns(roi: number) {

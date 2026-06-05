@@ -1,6 +1,11 @@
 import { connectDB } from "@/lib/mongodb";
-import { getMarketDataProvider, isLiveMarketEnabled } from "@/lib/market-data";
+import {
+  fetchQuoteWithFallback,
+  getMarketDataProviders,
+  isLiveMarketEnabled,
+} from "@/lib/market-data";
 import Stock from "@/models/Stock";
+import { processPendingOrders } from "@/services/order.service";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -15,16 +20,19 @@ export async function syncMarketPrices(options?: {
   force?: boolean;
   maxSymbols?: number;
 }) {
-  const provider = getMarketDataProvider();
-  if (!provider) {
+  const providers = getMarketDataProviders();
+  if (providers.length === 0) {
     return {
       live: false,
       synced: 0,
       failed: 0,
       skipped: 0,
-      message: "No market API key configured",
+      message: "No market API key configured in .env.local",
     };
   }
+
+  const rateLimitMs = Math.min(...providers.map((p) => p.rateLimitMs));
+  const providerNames = providers.map((p) => p.name).join(", ");
 
   await connectDB();
   const stocks = await Stock.find().sort({ symbol: 1 });
@@ -47,14 +55,15 @@ export async function syncMarketPrices(options?: {
     }
 
     processed += 1;
-    const quote = await provider.fetchQuote(stock.symbol);
+    const result = await fetchQuoteWithFallback(stock.symbol);
 
-    if (!quote) {
+    if (!result) {
       failed += 1;
-      await delay(provider.rateLimitMs);
+      await delay(rateLimitMs);
       continue;
     }
 
+    const { quote } = result;
     await Stock.findOneAndUpdate(
       { symbol: stock.symbol },
       {
@@ -64,18 +73,21 @@ export async function syncMarketPrices(options?: {
       }
     );
     synced += 1;
-    await delay(provider.rateLimitMs);
+    await delay(rateLimitMs);
   }
+
+  const orderResult = await processPendingOrders();
 
   return {
     live: true,
-    provider: provider.name,
+    provider: providerNames,
     synced,
     failed,
     skipped,
+    ordersFilled: orderResult.filled,
     message:
       synced > 0
-        ? `Updated ${synced} stock price(s) from ${provider.name}`
+        ? `Updated ${synced} stock price(s) via ${providerNames}`
         : "No stale symbols to refresh",
   };
 }

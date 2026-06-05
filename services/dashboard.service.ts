@@ -5,11 +5,10 @@ import { AppError } from "@/lib/errors";
 import {
   getHoldingsForUser,
   getRoiPercent,
-  getAllocationBySector,
-  getSectorConcentration,
   computePortfolioValue,
 } from "@/services/portfolio.service";
 import { getCurrentUserRank } from "@/services/leaderboard.service";
+import { generatePortfolioInsight } from "@/services/ai/mentor.service";
 import { INITIAL_VIRTUAL_CASH } from "@/lib/constants";
 
 export async function getDashboardData(userId: string) {
@@ -46,29 +45,8 @@ export async function getDashboardData(userId: string) {
         }))
       : [{ label: "Start", value: INITIAL_VIRTUAL_CASH }, { label: "Now", value: totalValue }];
 
-  const allocation = getAllocationBySector(holdings);
-  const { topSector, concentration } = getSectorConcentration(allocation);
-
-  const rank = await getCurrentUserRank(userId);
-
-  const aiInsight = {
-    healthScore: Math.min(
-      100,
-      Math.round(
-        (allocation.length >= 3 ? 30 : allocation.length * 10) +
-          (concentration < 0.5 ? 30 : 10) +
-          (roi > 0 ? 25 : 10) +
-          (user.cashBalance / totalValue < 0.3 ? 15 : 5)
-      )
-    ),
-    riskLevel:
-      concentration > 0.6 ? "High" : concentration > 0.4 ? "Moderate" : "Low",
-    diversificationScore: Math.min(100, Math.round((1 - concentration) * 100 + allocation.length * 5)),
-    summary:
-      holdings.length === 0
-        ? "Start trading to build your portfolio. Diversify across sectors to reduce risk."
-        : `Your portfolio has ${Math.round(concentration * 100)}% exposure to ${topSector}. Consider diversifying into Banking, FMCG, and Energy sectors.`,
-  };
+  const rank = await getCurrentUserRank(userId, user.totalPortfolioValue);
+  const aiInsight = await generatePortfolioInsight(user);
 
   return {
     portfolio: {

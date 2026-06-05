@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import StockSearch from "@/components/market/StockSearch";
 import StockCard from "@/components/market/StockCard";
 import StockTable, { type MarketStock } from "@/components/market/StockTable";
@@ -8,23 +8,23 @@ import WatchList from "@/components/market/WatchList";
 import TradeModal from "@/components/market/TradeModal";
 import PageHeader from "@/components/ui/PageHeader";
 import { formatCurrency } from "@/lib/format";
+import { useLivePrices } from "@/hooks/useLivePrices";
 import toast from "react-hot-toast";
 
 export default function MarketView() {
-  const [stocks, setStocks] = useState<MarketStock[]>([]);
-  const [topGainers, setTopGainers] = useState<MarketStock[]>([]);
+  const [baseStocks, setBaseStocks] = useState<MarketStock[]>([]);
   const [search, setSearch] = useState("");
   const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
   const [live, setLive] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [streaming, setStreaming] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/market");
     if (!res.ok) return;
     const data = await res.json();
-    setStocks(data.stocks);
-    setTopGainers(data.topGainers);
+    setBaseStocks(data.stocks);
     setLive(Boolean(data.live));
     setLastUpdated(data.lastUpdated ?? null);
   }, []);
@@ -34,6 +34,30 @@ export default function MarketView() {
     const interval = setInterval(load, 60_000);
     return () => clearInterval(interval);
   }, [load]);
+
+  const liveStocks = useLivePrices(baseStocks);
+  const stocks: MarketStock[] = useMemo(
+    () =>
+      liveStocks.map((s) => {
+        const base = baseStocks.find((b) => b.symbol === s.symbol);
+        return {
+          symbol: s.symbol,
+          companyName: base?.companyName ?? s.companyName ?? s.symbol,
+          price: s.price,
+          changePercent: s.changePercent,
+        };
+      }),
+    [liveStocks, baseStocks]
+  );
+
+  useEffect(() => {
+    if (baseStocks.length > 0) setStreaming(true);
+  }, [baseStocks.length]);
+
+  const topGainers = useMemo(
+    () => [...stocks].sort((a, b) => b.changePercent - a.changePercent).slice(0, 4),
+    [stocks]
+  );
 
   const refreshAll = async () => {
     setSyncing(true);
@@ -82,6 +106,15 @@ export default function MarketView() {
           description="Discover stocks, monitor top movers, and execute virtual trades."
         />
         <div className="flex flex-wrap items-center gap-3">
+          {streaming && (
+            <span className="flex items-center gap-1.5 rounded-full bg-green-500/15 px-3 py-1 text-xs font-medium text-green-400">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+              </span>
+              Live ticks
+            </span>
+          )}
           <span
             className={`rounded-full px-3 py-1 text-xs font-medium ${
               live
@@ -89,11 +122,11 @@ export default function MarketView() {
                 : "bg-zinc-800 text-zinc-400"
             }`}
           >
-            {live ? "Live data" : "Seeded data"}
+            {live ? "API data" : "Seeded data"}
           </span>
           {lastUpdated && (
             <span className="text-xs text-zinc-500">
-              Updated {new Date(lastUpdated).toLocaleString("en-IN")}
+              Synced {new Date(lastUpdated).toLocaleString("en-IN")}
             </span>
           )}
           {live && (

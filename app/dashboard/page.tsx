@@ -4,6 +4,8 @@ import { PortfolioOverview } from "@/components/dashboard/PortfolioOverview";
 import PortfolioGrowthChart from "@/components/dashboard/PortfolioGrowthChart";
 import AIInsightCard from "@/components/dashboard/AIInsightCard";
 import RecentTrades from "@/components/dashboard/RecentTrades";
+import DashboardWatchlist from "@/components/dashboard/DashboardWatchlist";
+import PendingOrdersPanel from "@/components/portfolio/PendingOrdersPanel";
 import PageHeader from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
@@ -32,6 +34,12 @@ export default async function DashboardPage() {
             <PortfolioGrowthChart chartData={data.chartData} />
           </div>
           <AIInsightCard insight={data.aiInsight} />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <DashboardWatchlist />
+          <div className="lg:col-span-2">
+            <PendingOrdersPanel />
+          </div>
         </div>
         <RecentTrades trades={data.recentTrades} />
       </div>

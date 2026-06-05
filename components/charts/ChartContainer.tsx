@@ -27,24 +27,6 @@ export default function ChartContainer({
       const { clientWidth, clientHeight } = el;
       if (clientWidth > 0 && clientHeight > 0) {
         setSize({ width: clientWidth, height: clientHeight });
-        // #region agent log
-        fetch("http://127.0.0.1:7383/ingest/1d956aa0-745f-4a8b-8b5a-ce55cefd5f19", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "23f49e",
-          },
-          body: JSON.stringify({
-            sessionId: "23f49e",
-            runId: "chart-size",
-            hypothesisId: "H1",
-            location: "ChartContainer.tsx:check",
-            message: "chart container measured",
-            data: { clientWidth, clientHeight },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
       }
     };
 

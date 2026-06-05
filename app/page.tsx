@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Brain,
@@ -11,6 +12,11 @@ import {
   Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
+
+function formatCount(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K+`;
+  return String(n);
+}
 
 const features = [
   {
@@ -51,14 +57,31 @@ const features = [
   },
 ];
 
-const stats = [
+const defaultStats = [
   { label: "Virtual Capital", value: "₹10L" },
-  { label: "Stocks to Trade", value: "500+" },
-  { label: "Learning Modules", value: "24" },
-  { label: "Active Investors", value: "12K+" },
+  { label: "Stocks to Trade", value: "—" },
+  { label: "Trades Executed", value: "—" },
+  { label: "Active Investors", value: "—" },
 ];
 
 export default function HomePage() {
+  const [stats, setStats] = useState(defaultStats);
+
+  useEffect(() => {
+    fetch("/api/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setStats([
+          { label: "Virtual Capital", value: data.virtualCapital ?? "₹10L" },
+          { label: "Stocks to Trade", value: formatCount(data.stocks ?? 0) },
+          { label: "Trades Executed", value: formatCount(data.trades ?? 0) },
+          { label: "Active Investors", value: formatCount(data.users ?? 0) },
+        ]);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <main className="min-h-screen bg-black text-white overflow-hidden">
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-2xl">
