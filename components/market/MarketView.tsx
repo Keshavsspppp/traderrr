@@ -21,12 +21,16 @@ export default function MarketView() {
   const [streaming, setStreaming] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/market");
-    if (!res.ok) return;
-    const data = await res.json();
-    setBaseStocks(data.stocks);
-    setLive(Boolean(data.live));
-    setLastUpdated(data.lastUpdated ?? null);
+    try {
+      const res = await fetch("/api/market");
+      if (!res.ok) return;
+      const data = await res.json();
+      setBaseStocks(data.stocks);
+      setLive(Boolean(data.live));
+      setLastUpdated(data.lastUpdated ?? null);
+    } catch {
+      /* network / dev reload */
+    }
   }, []);
 
   useEffect(() => {

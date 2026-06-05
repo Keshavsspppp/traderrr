@@ -21,6 +21,17 @@ const priorityColor = {
   LOW: "text-green-400 bg-green-500/10",
 };
 
+function GeneratedAt({ iso }: { iso: string }) {
+  const [label, setLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLabel(new Date(iso).toLocaleTimeString("en-IN"));
+  }, [iso]);
+
+  if (!label) return null;
+  return <p className="mt-3 text-[10px] text-zinc-600">Generated {label}</p>;
+}
+
 export default function AIInsightCard() {
   const [insight, setInsight] = useState<MentorResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -187,9 +198,7 @@ export default function AIInsightCard() {
           </div>
 
           {insight.generatedAt && insight.source !== "rules" && (
-            <p className="mt-3 text-[10px] text-zinc-600">
-              Generated {new Date(insight.generatedAt).toLocaleTimeString("en-IN")}
-            </p>
+            <GeneratedAt iso={insight.generatedAt} />
           )}
         </>
       )}

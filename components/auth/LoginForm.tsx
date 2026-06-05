@@ -36,6 +36,8 @@ export default function LoginForm() {
       }
       if (json.user) {
         useAuthStore.getState().login(json.user);
+      } else {
+        await useAuthStore.getState().hydrate({ force: true });
       }
       toast.success("Welcome back!");
       router.push("/dashboard");

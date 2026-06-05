@@ -1,5 +1,6 @@
 "use client";
 
+import type { SafeUser } from "@/lib/session";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import MobileNav from "./MobileNav";
@@ -7,13 +8,15 @@ import { UserProvider } from "@/components/providers/UserProvider";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  initialUser?: SafeUser | null;
 }
 
 export default function DashboardLayout({
   children,
+  initialUser,
 }: DashboardLayoutProps) {
   return (
-    <UserProvider>
+    <UserProvider initialUser={initialUser}>
       <div className="min-h-screen bg-black text-white">
         <div className="flex">
           <Sidebar />

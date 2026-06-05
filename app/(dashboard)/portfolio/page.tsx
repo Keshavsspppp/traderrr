@@ -1,11 +1,8 @@
-import { redirect } from "next/navigation";
-import DashboardLayout from "@/components/layout/DashboardLayout";
 import PerformanceCard from "@/components/portfolio/PerformanceCard";
 import AllocationChart from "@/components/portfolio/AllocationChart";
 import HoldingsTable from "@/components/portfolio/HoldingsTable";
 import PendingOrdersPanel from "@/components/portfolio/PendingOrdersPanel";
 import PageHeader from "@/components/ui/PageHeader";
-import { getCurrentUser } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
 import { requireUser } from "@/lib/api-auth";
 import {
@@ -17,9 +14,6 @@ import {
 import { INITIAL_VIRTUAL_CASH } from "@/lib/constants";
 
 export default async function PortfolioPage() {
-  const sessionUser = await getCurrentUser();
-  if (!sessionUser) redirect("/login");
-
   await connectDB();
   const user = await requireUser();
   const userId = user._id.toString();
@@ -36,21 +30,19 @@ export default async function PortfolioPage() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6 sm:space-y-8">
-        <PageHeader
-          title="Portfolio"
-          description="Holdings, sector allocation, and performance metrics for your virtual investments."
-        />
-        <PerformanceCard performance={performance} />
-        <PendingOrdersPanel />
-        <div className="grid gap-6 lg:grid-cols-3">
-          <AllocationChart allocation={allocation} />
-          <div className="lg:col-span-2">
-            <HoldingsTable holdings={holdings} />
-          </div>
+    <div className="space-y-6 sm:space-y-8">
+      <PageHeader
+        title="Portfolio"
+        description="Holdings, sector allocation, and performance metrics for your virtual investments."
+      />
+      <PerformanceCard performance={performance} />
+      <PendingOrdersPanel />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <AllocationChart allocation={allocation} />
+        <div className="lg:col-span-2">
+          <HoldingsTable holdings={holdings} />
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

@@ -1,10 +1,7 @@
-import { redirect } from "next/navigation";
-import DashboardLayout from "@/components/layout/DashboardLayout";
 import UserStats from "@/components/profile/UserStats";
 import AchievementCard from "@/components/profile/AchievementCard";
 import SettingsCard from "@/components/profile/SettingsCard";
 import PageHeader from "@/components/ui/PageHeader";
-import { getCurrentUser } from "@/lib/session";
 import { connectDB } from "@/lib/mongodb";
 import { requireUser } from "@/lib/api-auth";
 import { processAchievements, getXpProgress } from "@/services/gamification.service";
@@ -14,9 +11,6 @@ import { toSafeUser } from "@/lib/session";
 import { ACHIEVEMENT_DEFS } from "@/lib/constants";
 
 export default async function ProfilePage() {
-  const sessionUser = await getCurrentUser();
-  if (!sessionUser) redirect("/login");
-
   await connectDB();
   const user = await requireUser();
   await processAchievements(user);
@@ -34,18 +28,16 @@ export default async function ProfilePage() {
   }));
 
   return (
-    <DashboardLayout>
-      <div className="space-y-8">
-        <PageHeader
-          title="Profile"
-          description="Investor level, achievements, and account settings."
-        />
-        <UserStats user={safeUser} rank={rank} roi={roi} xpProgress={xpProgress} />
-        <div className="grid gap-6 lg:grid-cols-2">
-          <AchievementCard achievements={achievements} />
-          <SettingsCard user={safeUser} />
-        </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Profile"
+        description="Investor level, achievements, and account settings."
+      />
+      <UserStats user={safeUser} rank={rank} roi={roi} xpProgress={xpProgress} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AchievementCard achievements={achievements} />
+        <SettingsCard user={safeUser} />
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
