@@ -9,13 +9,13 @@ export default function AIInsightCard({ insight }: { insight: AIInsight }) {
   };
 
   return (
-    <div className="flex h-full flex-col rounded-3xl border border-green-500/20 bg-gradient-to-b from-green-500/10 to-transparent p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+    <div className="flex h-full flex-col rounded-2xl border border-green-500/20 bg-gradient-to-b from-green-500/10 to-transparent p-4 sm:rounded-3xl sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="rounded-xl bg-green-500/20 p-2 text-green-400">
-            <Brain size={22} />
+            <Brain size={20} className="sm:h-[22px] sm:w-[22px]" />
           </div>
-          <h2 className="text-xl font-semibold">AI Portfolio Mentor</h2>
+          <h2 className="text-lg font-semibold sm:text-xl">AI Portfolio Mentor</h2>
         </div>
         {insight.source !== "rules" && (
           <span className="flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-1 text-xs capitalize text-green-400">

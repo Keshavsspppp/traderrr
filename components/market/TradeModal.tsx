@@ -68,8 +68,8 @@ export default function TradeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-950 p-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4">
+      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl border border-white/10 bg-zinc-950 p-5 sm:max-w-md sm:rounded-3xl sm:p-6">
         <h2 className="text-2xl font-bold">Trade {symbol}</h2>
         <p className="mt-1 text-zinc-400">Market: {formatCurrency(price)}</p>
 

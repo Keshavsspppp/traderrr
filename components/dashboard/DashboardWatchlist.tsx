@@ -28,7 +28,7 @@ export default function DashboardWatchlist() {
   }, [load]);
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+    <div className="card-panel">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Watchlist</h2>
         <Link

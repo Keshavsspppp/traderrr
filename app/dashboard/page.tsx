@@ -20,7 +20,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         <PageHeader
           title={`Welcome back, ${user.name.split(" ")[0]}`}
           description="Monitor portfolio performance, AI insights, and recent trades in one place."

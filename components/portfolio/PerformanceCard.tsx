@@ -32,7 +32,7 @@ export default function PerformanceCard({ performance }: { performance: Performa
             <p className="text-zinc-400">{stat.title}</p>
             <stat.icon size={22} className="text-green-400" />
           </div>
-          <h3 className={`mt-4 text-3xl font-bold ${stat.color ?? ""}`}>{stat.value}</h3>
+          <h3 className={`mt-4 text-2xl font-bold sm:text-3xl ${stat.color ?? ""}`}>{stat.value}</h3>
         </div>
       ))}
     </div>

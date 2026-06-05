@@ -13,13 +13,13 @@ export default function UserStats({ user, rank, roi, xpProgress }: UserStatsProp
   const initial = user.name.charAt(0).toUpperCase();
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
+    <div className="card-panel p-5 sm:p-8">
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
         <div className="flex h-28 w-28 items-center justify-center rounded-full bg-green-500 text-4xl font-bold text-black">
           {initial}
         </div>
         <div className="flex-1">
-          <h2 className="text-3xl font-bold">{user.name}</h2>
+          <h2 className="text-2xl font-bold sm:text-3xl">{user.name}</h2>
           <p className="mt-2 text-zinc-400">
             {user.levelTitle} · Level {user.level}
           </p>

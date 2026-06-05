@@ -37,7 +37,7 @@ export default async function PortfolioPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         <PageHeader
           title="Portfolio"
           description="Holdings, sector allocation, and performance metrics for your virtual investments."

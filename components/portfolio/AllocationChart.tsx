@@ -13,9 +13,9 @@ export default function AllocationChart({
   const data = allocation.length > 0 ? allocation : [{ name: "Cash", value: 100 }];
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-      <h2 className="mb-6 text-xl font-semibold">Asset Allocation</h2>
-      <ChartContainer className="h-[300px]" minHeight={300}>
+    <div className="card-panel">
+      <h2 className="mb-4 text-lg font-semibold sm:mb-6 sm:text-xl">Asset Allocation</h2>
+      <ChartContainer className="h-[220px] sm:h-[280px] lg:h-[300px]" minHeight={220}>
         <PieChart>
           <Pie data={data} dataKey="value" nameKey="name" outerRadius={90}>
             {data.map((_, index) => (

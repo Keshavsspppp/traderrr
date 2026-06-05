@@ -45,8 +45,8 @@ export default function PortfolioGrowthChart({
   }, [data]);
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="card-panel">
+      <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Portfolio Growth</h2>
           <p className="mt-1 text-sm text-zinc-400">Performance over time</p>
@@ -71,7 +71,7 @@ export default function PortfolioGrowthChart({
           </span>
         </div>
       </div>
-      <ChartContainer className="h-[360px]" minHeight={360}>
+      <ChartContainer className="h-[240px] sm:h-[320px] lg:h-[360px]" minHeight={240}>
         <AreaChart data={data}>
             <defs>
               <linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">

@@ -85,12 +85,12 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-black text-white overflow-hidden">
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-500">
-              <span className="text-lg font-bold text-black">IA</span>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4">
+          <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-green-500 sm:h-9 sm:w-9">
+              <span className="text-base font-bold text-black sm:text-lg">IA</span>
             </div>
-            <span className="text-2xl font-bold tracking-tight">
+            <span className="truncate text-xl font-bold tracking-tight sm:text-2xl">
               Invest<span className="text-green-400">Arena</span>
             </span>
           </Link>
@@ -142,7 +142,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl"
+            className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-7xl"
           >
             Master trading.
             <br />

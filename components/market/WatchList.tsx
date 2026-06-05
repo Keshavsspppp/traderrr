@@ -36,8 +36,8 @@ export default function WatchList({ onRefresh }: { onRefresh?: () => void }) {
   };
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-      <h2 className="mb-6 text-xl font-semibold">Watchlist</h2>
+    <div className="card-panel">
+      <h2 className="mb-4 text-lg font-semibold sm:mb-6 sm:text-xl">Watchlist</h2>
       {stocks.length === 0 ? (
         <p className="text-sm text-zinc-400">No stocks in watchlist yet.</p>
       ) : (

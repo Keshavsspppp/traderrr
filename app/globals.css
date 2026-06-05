@@ -12,6 +12,16 @@ body {
   font-family: var(--font-inter, "Inter"), system-ui, sans-serif;
   background: #0a0a0a;
   color: #fafafa;
+  overflow-x: hidden;
+}
+
+/* Mobile bottom nav + notched devices */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.card-panel {
+  @apply rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl sm:rounded-3xl sm:p-6;
 }
 
 .glass {
