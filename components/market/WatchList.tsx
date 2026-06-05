@@ -26,12 +26,21 @@ export default function WatchList({ onRefresh }: { onRefresh?: () => void }) {
     load();
   }, [load]);
 
+  useEffect(() => {
+    const handler = () => {
+      load();
+    };
+    window.addEventListener("watchlist:changed", handler);
+    return () => window.removeEventListener("watchlist:changed", handler);
+  }, [load]);
+
   const remove = async (symbol: string) => {
     const res = await fetch(`/api/watchlist?symbol=${symbol}`, { method: "DELETE" });
     if (res.ok) {
       toast.success(`Removed ${symbol}`);
       load();
       onRefresh?.();
+      window.dispatchEvent(new Event("watchlist:changed"));
     }
   };
 

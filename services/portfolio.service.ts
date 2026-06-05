@@ -1,17 +1,27 @@
 import Holding from "@/models/Holding";
 import Stock from "@/models/Stock";
 import type { IUser } from "@/models/User";
+import type { ClientSession } from "mongoose";
 import { INITIAL_VIRTUAL_CASH } from "@/lib/constants";
 
-export async function getHoldingsForUser(userId: string) {
-  const holdings = await Holding.find({ userId });
+export async function getHoldingsForUser(
+  userId: string,
+  options?: { session?: ClientSession }
+) {
+  const session = options?.session;
+  const holdingsQuery = Holding.find({ userId });
+  if (session) holdingsQuery.session(session);
+  const holdings = await holdingsQuery;
   const symbols = holdings.map((h) => h.stockSymbol);
-  const stocks = await Stock.find({ symbol: { $in: symbols } });
+  const stocksQuery = Stock.find({ symbol: { $in: symbols } });
+  if (session) stocksQuery.session(session);
+  const stocks = await stocksQuery;
   const priceMap = new Map(stocks.map((s) => [s.symbol, s]));
 
   return holdings.map((h) => {
     const stock = priceMap.get(h.stockSymbol);
     const currentPrice = stock?.currentPrice ?? h.currentPrice;
+    const previousClose = stock?.previousClose ?? currentPrice;
     const invested = h.avgBuyPrice * h.quantity;
     const currentValue = currentPrice * h.quantity;
     const pnl = currentValue - invested;
@@ -24,6 +34,7 @@ export async function getHoldingsForUser(userId: string) {
       quantity: h.quantity,
       avgBuyPrice: h.avgBuyPrice,
       currentPrice,
+      previousClose,
       invested,
       currentValue,
       pnl,
@@ -32,16 +43,22 @@ export async function getHoldingsForUser(userId: string) {
   });
 }
 
-export async function computePortfolioValue(user: IUser) {
-  const holdings = await getHoldingsForUser(user._id.toString());
+export async function computePortfolioValue(
+  user: IUser,
+  options?: { session?: ClientSession }
+) {
+  const holdings = await getHoldingsForUser(user._id.toString(), options);
   const holdingsValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
   return user.cashBalance + holdingsValue;
 }
 
-export async function refreshUserPortfolioValue(user: IUser) {
-  const total = await computePortfolioValue(user);
+export async function refreshUserPortfolioValue(
+  user: IUser,
+  options?: { session?: ClientSession }
+) {
+  const total = await computePortfolioValue(user, options);
   user.totalPortfolioValue = total;
-  await user.save();
+  await user.save({ session: options?.session });
   return total;
 }
 

@@ -6,6 +6,11 @@ export function rateLimit(
   windowMs = 60_000
 ): boolean {
   const now = Date.now();
+  if (hits.size > 10_000) {
+    for (const [k, v] of hits) {
+      if (now > v.resetAt) hits.delete(k);
+    }
+  }
   const entry = hits.get(key);
 
   if (!entry || now > entry.resetAt) {

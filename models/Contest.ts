@@ -1,11 +1,11 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IContest extends Document {
   title: string;
 
   startingBalance: number;
 
-  participants: string[];
+  participants: Types.ObjectId[];
 
   startDate: Date;
 

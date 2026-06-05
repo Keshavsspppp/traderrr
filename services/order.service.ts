@@ -2,7 +2,8 @@ import User, { type IUser } from "@/models/User";
 import Stock from "@/models/Stock";
 import PendingOrder, { type IPendingOrder } from "@/models/PendingOrder";
 import { AppError } from "@/lib/errors";
-import { executeTrade } from "@/services/trade.service";
+import mongoose from "mongoose";
+import { executeTrade, executeTradeWithSession, runTradeSideEffects } from "@/services/trade.service";
 import { createNotification } from "@/services/notification.service";
 import { formatCurrency } from "@/lib/format";
 import type { OrderInput } from "@/lib/validations/order";
@@ -44,7 +45,7 @@ export async function placeOrder(user: IUser, input: OrderInput) {
     status: "PENDING",
   });
 
-  const filled = await tryFillOrder(order, stock.currentPrice);
+  const filled = await tryFillOrder(order._id.toString(), stock.currentPrice);
   if (filled) {
     return { order: filled, immediate: true };
   }
@@ -60,25 +61,53 @@ export async function placeOrder(user: IUser, input: OrderInput) {
   return { order, immediate: false };
 }
 
-async function tryFillOrder(order: IPendingOrder, currentPrice: number) {
-  if (order.status !== "PENDING") return null;
-  if (!shouldFill(order, currentPrice)) return null;
+async function tryFillOrder(orderId: string, currentPrice: number) {
+  const session = await mongoose.startSession();
+  let filled: IPendingOrder | null = null;
+  let filledUserId: string | null = null;
+  let executed: { symbol: string; quantity: number; price: number; type: "BUY" | "SELL" } | null =
+    null;
 
-  const user = await User.findById(order.userId);
-  if (!user) return null;
+  try {
+    await session.withTransaction(async () => {
+      const order = await PendingOrder.findById(orderId).session(session);
+      if (!order || order.status !== "PENDING") return;
+      if (!shouldFill(order, currentPrice)) return;
 
-  await executeTrade(user, {
-    symbol: order.stockSymbol,
-    quantity: order.quantity,
-    type: order.type,
-  });
+      const user = await User.findById(order.userId).session(session);
+      if (!user) return;
 
-  order.status = "FILLED";
-  order.filledPrice = currentPrice;
-  order.filledAt = new Date();
-  await order.save();
+      const result = await executeTradeWithSession(
+        user._id,
+        {
+          symbol: order.stockSymbol,
+          quantity: order.quantity,
+          type: order.type,
+        },
+        session
+      );
 
-  return order;
+      executed = result.transaction;
+
+      order.status = "FILLED";
+      order.filledPrice = result.transaction.price;
+      order.filledAt = new Date();
+      await order.save({ session });
+
+      filled = order;
+      filledUserId = order.userId.toString();
+    });
+  } catch {
+    return null;
+  } finally {
+    session.endSession();
+  }
+
+  if (filled && executed && filledUserId) {
+    await runTradeSideEffects(filledUserId, executed);
+  }
+
+  return filled;
 }
 
 export async function processPendingOrders() {
@@ -89,7 +118,7 @@ export async function processPendingOrders() {
     const stock = await Stock.findOne({ symbol: order.stockSymbol });
     if (!stock) continue;
 
-    const result = await tryFillOrder(order, stock.currentPrice);
+    const result = await tryFillOrder(order._id.toString(), stock.currentPrice);
     if (result) filled += 1;
   }
 

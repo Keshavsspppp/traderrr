@@ -18,12 +18,37 @@ export async function getDashboardData(userId: string) {
   const roi = getRoiPercent(totalValue);
   const totalReturn = totalValue - INITIAL_VIRTUAL_CASH;
 
+  if (Math.abs((user.totalPortfolioValue ?? 0) - totalValue) > 0.01) {
+    user.totalPortfolioValue = totalValue;
+    await user.save();
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const hasTodaySnapshot = await PortfolioSnapshot.exists({
+    userId: user._id,
+    date: { $gte: today },
+  });
+  if (!hasTodaySnapshot) {
+    await PortfolioSnapshot.create({
+      userId: user._id,
+      value: totalValue,
+      date: new Date(),
+    });
+  }
+
   const holdingsValue = holdings.reduce((s, h) => s + h.currentValue, 0);
-  const dailyPnL = holdings.reduce((s, h) => {
-    const stockChange = h.currentPrice - h.avgBuyPrice;
-    return s + stockChange * h.quantity * 0.01;
-  }, 0);
-  const dailyPnLPercent = totalValue > 0 ? (dailyPnL / totalValue) * 100 : 0;
+  const previousCloseValue = holdings.reduce(
+    (s, h) => s + (h.previousClose ?? h.currentPrice) * h.quantity,
+    0
+  );
+  const dailyPnL = holdings.reduce(
+    (s, h) => s + (h.currentPrice - (h.previousClose ?? h.currentPrice)) * h.quantity,
+    0
+  );
+  const previousPortfolioValue = user.cashBalance + previousCloseValue;
+  const dailyPnLPercent =
+    previousPortfolioValue > 0 ? (dailyPnL / previousPortfolioValue) * 100 : 0;
 
   const recentTransactions = await Transaction.find({ userId: user._id })
     .sort({ createdAt: -1 })
@@ -44,7 +69,7 @@ export async function getDashboardData(userId: string) {
         }))
       : [{ label: "Start", value: INITIAL_VIRTUAL_CASH }, { label: "Now", value: totalValue }];
 
-  const rank = await getCurrentUserRank(userId, user.totalPortfolioValue);
+  const rank = await getCurrentUserRank(userId, totalValue);
 
   return {
     portfolio: {
@@ -52,7 +77,7 @@ export async function getDashboardData(userId: string) {
       cashBalance: user.cashBalance,
       dailyPnL,
       dailyPnLPercent,
-      dailyChange: roi,
+      dailyChange: dailyPnLPercent,
       totalReturn,
       roi,
     },

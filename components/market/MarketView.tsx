@@ -18,7 +18,6 @@ export default function MarketView() {
   const [live, setLive] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [streaming, setStreaming] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -39,7 +38,7 @@ export default function MarketView() {
     return () => clearInterval(interval);
   }, [load]);
 
-  const liveStocks = useLivePrices(baseStocks);
+  const { stocks: liveStocks, stream } = useLivePrices(baseStocks);
   const stocks: MarketStock[] = useMemo(
     () =>
       liveStocks.map((s) => {
@@ -53,10 +52,6 @@ export default function MarketView() {
       }),
     [liveStocks, baseStocks]
   );
-
-  useEffect(() => {
-    if (baseStocks.length > 0) setStreaming(true);
-  }, [baseStocks.length]);
 
   const topGainers = useMemo(
     () => [...stocks].sort((a, b) => b.changePercent - a.changePercent).slice(0, 4),
@@ -95,6 +90,7 @@ export default function MarketView() {
     });
     if (res.ok) {
       toast.success(`${symbol} added to watchlist`);
+      window.dispatchEvent(new Event("watchlist:changed"));
       load();
     } else {
       const json = await res.json();
@@ -110,13 +106,41 @@ export default function MarketView() {
           description="Discover stocks, monitor top movers, and execute virtual trades."
         />
         <div className="flex flex-wrap items-center gap-3">
-          {streaming && (
-            <span className="flex items-center gap-1.5 rounded-full bg-green-500/15 px-3 py-1 text-xs font-medium text-green-400">
+          {baseStocks.length > 0 && (
+            <span
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+                stream.state === "connected"
+                  ? "bg-green-500/15 text-green-400"
+                  : stream.state === "reconnecting"
+                    ? "bg-amber-500/15 text-amber-300"
+                    : "bg-zinc-800 text-zinc-300"
+              }`}
+            >
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+                <span
+                  className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${
+                    stream.state === "connected"
+                      ? "bg-green-400"
+                      : stream.state === "reconnecting"
+                        ? "bg-amber-300"
+                        : "bg-zinc-400"
+                  }`}
+                />
+                <span
+                  className={`relative inline-flex h-2 w-2 rounded-full ${
+                    stream.state === "connected"
+                      ? "bg-green-400"
+                      : stream.state === "reconnecting"
+                        ? "bg-amber-300"
+                        : "bg-zinc-400"
+                  }`}
+                />
               </span>
-              Live ticks
+              {stream.state === "connected" && "Live ticks"}
+              {stream.state === "connecting" && "Connecting…"}
+              {stream.state === "reconnecting" &&
+                `Reconnecting… (try ${stream.attempt})`}
+              {stream.state === "closed" && "Stream closed"}
             </span>
           )}
           <span

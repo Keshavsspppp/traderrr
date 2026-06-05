@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
 const protectedPaths = [
   "/dashboard",
@@ -11,7 +12,20 @@ const protectedPaths = [
 
 const authPaths = ["/login", "/register"];
 
-export function proxy(request: NextRequest) {
+const JWT_SECRET = process.env.JWT_SECRET;
+const secret = JWT_SECRET || "dev-only-secret-change-me";
+const jwtKey = new TextEncoder().encode(secret);
+
+async function isValidToken(token: string): Promise<boolean> {
+  try {
+    await jwtVerify(token, jwtKey);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
   const { pathname } = request.nextUrl;
 
@@ -22,13 +36,15 @@ export function proxy(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
 
-  if (isProtected && !token) {
+  const validToken = token ? await isValidToken(token) : false;
+
+  if (isProtected && !validToken) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthPage && token) {
+  if (isAuthPage && validToken) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

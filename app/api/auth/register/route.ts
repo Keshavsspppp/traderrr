@@ -7,13 +7,14 @@ import { setAuthCookie } from "@/lib/cookies";
 import { toSafeUser } from "@/lib/session";
 import { apiHandler, AppError } from "@/lib/errors";
 import { rateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/ip";
 import User from "@/models/User";
 import Watchlist from "@/models/Watchlist";
 import { INITIAL_VIRTUAL_CASH } from "@/lib/constants";
 
 export const POST = apiHandler(async (req) => {
-  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
-  if (!rateLimit(`register:${ip}`)) {
+  const ip = getClientIp(req.headers);
+  if (!rateLimit(`register:${ip}`, 10, 60_000)) {
     throw new AppError("Too many requests", 429, "RATE_LIMITED");
   }
 
@@ -24,6 +25,9 @@ export const POST = apiHandler(async (req) => {
   }
 
   const { name, email, password } = parsed.data;
+  if (!rateLimit(`register:${ip}:${email.toLowerCase()}`, 5, 60_000)) {
+    throw new AppError("Too many requests", 429, "RATE_LIMITED");
+  }
 
   await connectDB();
 
