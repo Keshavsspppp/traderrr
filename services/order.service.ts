@@ -1,9 +1,12 @@
 import User, { type IUser } from "@/models/User";
 import Stock from "@/models/Stock";
 import PendingOrder, { type IPendingOrder } from "@/models/PendingOrder";
+import Contest from "@/models/Contest";
+import ContestAccount from "@/models/ContestAccount";
 import { AppError } from "@/lib/errors";
 import mongoose from "mongoose";
 import { executeTrade, executeTradeWithSession, runTradeSideEffects } from "@/services/trade.service";
+import { getContestStatus } from "@/services/contest.service";
 import { createNotification } from "@/services/notification.service";
 import { formatCurrency } from "@/lib/format";
 import type { OrderInput } from "@/lib/validations/order";
@@ -22,6 +25,24 @@ function shouldFill(order: IPendingOrder, currentPrice: number): boolean {
 }
 
 export async function placeOrder(user: IUser, input: OrderInput) {
+  if (input.contestId) {
+    const contest = await Contest.findById(input.contestId);
+    if (!contest) {
+      throw new AppError("Contest not found", 404, "CONTEST_NOT_FOUND");
+    }
+    if (getContestStatus(contest) !== "ACTIVE") {
+      throw new AppError("Contest is not active", 400, "CONTEST_NOT_ACTIVE");
+    }
+    const account = await ContestAccount.findOne({
+      contestId: contest._id,
+      userId: user._id,
+      leftAt: null,
+    });
+    if (!account) {
+      throw new AppError("You are not in this contest", 403, "CONTEST_NOT_JOINED");
+    }
+  }
+
   const stock = await Stock.findOne({ symbol: input.symbol });
   if (!stock) {
     throw new AppError("Stock not found", 404, "STOCK_NOT_FOUND");
@@ -32,11 +53,13 @@ export async function placeOrder(user: IUser, input: OrderInput) {
       symbol: input.symbol,
       quantity: input.quantity,
       type: input.type,
+      contestId: input.contestId,
     });
   }
 
   const order = await PendingOrder.create({
     userId: user._id,
+    contestId: input.contestId ?? null,
     stockSymbol: input.symbol,
     quantity: input.quantity,
     type: input.type,
@@ -55,7 +78,7 @@ export async function placeOrder(user: IUser, input: OrderInput) {
     type: "order",
     title: `${input.orderType.replace("_", " ")} order placed`,
     message: `${input.type} ${input.quantity} × ${input.symbol} @ ${formatCurrency(input.limitPrice!)}`,
-    link: "/portfolio",
+    link: input.contestId ? `/contests/${input.contestId}/portfolio` : "/portfolio",
   });
 
   return { order, immediate: false };
@@ -65,6 +88,7 @@ async function tryFillOrder(orderId: string, currentPrice: number) {
   const session = await mongoose.startSession();
   let filled: IPendingOrder | null = null;
   let filledUserId: string | null = null;
+  let filledContestId: string | null = null;
   let executed: { symbol: string; quantity: number; price: number; type: "BUY" | "SELL" } | null =
     null;
 
@@ -83,6 +107,7 @@ async function tryFillOrder(orderId: string, currentPrice: number) {
           symbol: order.stockSymbol,
           quantity: order.quantity,
           type: order.type,
+          contestId: order.contestId?.toString?.(),
         },
         session
       );
@@ -96,6 +121,7 @@ async function tryFillOrder(orderId: string, currentPrice: number) {
 
       filled = order;
       filledUserId = order.userId.toString();
+      filledContestId = order.contestId?.toString?.() ?? null;
     });
   } catch {
     return null;
@@ -104,7 +130,9 @@ async function tryFillOrder(orderId: string, currentPrice: number) {
   }
 
   if (filled && executed && filledUserId) {
-    await runTradeSideEffects(filledUserId, executed);
+    await runTradeSideEffects(filledUserId, executed, {
+      contestId: filledContestId,
+    });
   }
 
   return filled;
@@ -125,11 +153,12 @@ export async function processPendingOrders() {
   return { processed: pending.length, filled };
 }
 
-export async function cancelOrder(userId: string, orderId: string) {
+export async function cancelOrder(userId: string, orderId: string, contestId?: string | null) {
   const order = await PendingOrder.findOne({
     _id: orderId,
     userId,
     status: "PENDING",
+    contestId: contestId ?? null,
   });
   if (!order) {
     throw new AppError("Order not found", 404);
@@ -139,8 +168,8 @@ export async function cancelOrder(userId: string, orderId: string) {
   return order;
 }
 
-export async function getUserOrders(userId: string) {
-  return PendingOrder.find({ userId })
+export async function getUserOrders(userId: string, contestId?: string | null) {
+  return PendingOrder.find({ userId, contestId: contestId ?? null })
     .sort({ createdAt: -1 })
     .limit(20);
 }

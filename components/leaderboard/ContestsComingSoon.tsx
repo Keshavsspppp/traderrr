@@ -1,4 +1,5 @@
-import { Calendar, Trophy } from "lucide-react";
+import Link from "next/link";
+import { Trophy } from "lucide-react";
 
 export default function ContestsComingSoon() {
   return (
@@ -10,13 +11,15 @@ export default function ContestsComingSoon() {
         <div>
           <h2 className="text-xl font-semibold">Portfolio Contests</h2>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
-            Weekly and monthly trading competitions are on the roadmap. Compete
-            for top ROI, sector mastery badges, and exclusive achievements.
+            Weekly and monthly ROI seasons with isolated paper portfolios. Join a
+            contest, trade during the window, and climb the contest leaderboard.
           </p>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-300">
-            <Calendar size={16} />
-            Coming soon
-          </div>
+          <Link
+            href="/contests"
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-500/15"
+          >
+            View contests
+          </Link>
         </div>
       </div>
     </div>

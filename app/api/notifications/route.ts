@@ -9,13 +9,22 @@ import {
   markNotificationRead,
 } from "@/services/notification.service";
 
-export const GET = apiHandler(async () => {
+export const GET = apiHandler(async (req) => {
   await connectDB();
   const user = await requireUser();
   const userId = user._id.toString();
 
+  const { searchParams } = new URL(req.url);
+  const all = searchParams.get("all") === "true";
+  const limitParam = searchParams.get("limit");
+  const limit = all
+    ? undefined
+    : limitParam
+      ? Math.max(1, Math.min(500, Number(limitParam)))
+      : 20;
+
   const [notifications, unreadCount] = await Promise.all([
-    getUserNotifications(userId),
+    getUserNotifications(userId, limit),
     getUnreadCount(userId),
   ]);
 

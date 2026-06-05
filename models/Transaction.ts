@@ -1,7 +1,9 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface ITransaction extends Document {
-  userId: string;
+  userId: Types.ObjectId;
+
+  contestId?: Types.ObjectId | null;
 
   stockSymbol: string;
 
@@ -18,6 +20,12 @@ const TransactionSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    contestId: {
+      type: Schema.Types.ObjectId,
+      ref: "Contest",
+      default: null,
     },
 
     stockSymbol: {

@@ -36,9 +36,10 @@ export default function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options?: { all?: boolean }) => {
     try {
-      const res = await fetch("/api/notifications");
+      const all = options?.all === true;
+      const res = await fetch(all ? "/api/notifications?all=true" : "/api/notifications");
       if (!res.ok) return;
       const data = await res.json();
       setNotifications(data.notifications ?? []);
@@ -70,7 +71,7 @@ export default function NotificationBell() {
     setOpen(next);
     if (next) {
       setLoading(true);
-      await load();
+      await load({ all: true });
       setLoading(false);
     }
   };

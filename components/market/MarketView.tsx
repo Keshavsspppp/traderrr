@@ -11,7 +11,13 @@ import { formatCurrency } from "@/lib/format";
 import { useLivePrices } from "@/hooks/useLivePrices";
 import toast from "react-hot-toast";
 
-export default function MarketView() {
+export default function MarketView({
+  contestId,
+  header,
+}: {
+  contestId?: string;
+  header?: { title: string; description: string };
+}) {
   const [baseStocks, setBaseStocks] = useState<MarketStock[]>([]);
   const [search, setSearch] = useState("");
   const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
@@ -102,8 +108,11 @@ export default function MarketView() {
     <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader
-          title="Market"
-          description="Discover stocks, monitor top movers, and execute virtual trades."
+          title={header?.title ?? "Market"}
+          description={
+            header?.description ??
+            "Discover stocks, monitor top movers, and execute virtual trades."
+          }
         />
         <div className="flex flex-wrap items-center gap-3">
           {baseStocks.length > 0 && (
@@ -194,6 +203,7 @@ export default function MarketView() {
         open={!!tradeSymbol}
         symbol={tradeSymbol ?? ""}
         price={tradeStock?.price ?? 0}
+        contestId={contestId}
         onClose={() => setTradeSymbol(null)}
         onSuccess={load}
       />

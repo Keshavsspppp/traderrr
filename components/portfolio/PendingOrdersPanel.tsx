@@ -14,18 +14,20 @@ type Order = {
   status: string;
 };
 
-export default function PendingOrdersPanel() {
+export default function PendingOrdersPanel({ contestId }: { contestId?: string }) {
   const [orders, setOrders] = useState<Order[]>([]);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/orders");
+    const url = new URL("/api/orders", window.location.origin);
+    if (contestId) url.searchParams.set("contestId", contestId);
+    const res = await fetch(url.toString());
     if (res.ok) {
       const data = await res.json();
       setOrders(
         (data.orders ?? []).filter((o: Order) => o.status === "PENDING")
       );
     }
-  }, []);
+  }, [contestId]);
 
   useEffect(() => {
     load();
@@ -34,7 +36,9 @@ export default function PendingOrdersPanel() {
   }, [load]);
 
   const cancel = async (id: string) => {
-    const res = await fetch(`/api/orders/${id}`, { method: "DELETE" });
+    const url = new URL(`/api/orders/${id}`, window.location.origin);
+    if (contestId) url.searchParams.set("contestId", contestId);
+    const res = await fetch(url.toString(), { method: "DELETE" });
     if (res.ok) {
       toast.success("Order cancelled");
       load();

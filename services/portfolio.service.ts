@@ -1,15 +1,19 @@
 import Holding from "@/models/Holding";
 import Stock from "@/models/Stock";
 import type { IUser } from "@/models/User";
+import type { IContestAccount } from "@/models/ContestAccount";
 import type { ClientSession } from "mongoose";
 import { INITIAL_VIRTUAL_CASH } from "@/lib/constants";
 
 export async function getHoldingsForUser(
   userId: string,
-  options?: { session?: ClientSession }
+  options?: { session?: ClientSession; contestId?: string | null }
 ) {
   const session = options?.session;
-  const holdingsQuery = Holding.find({ userId });
+  const holdingsQuery = Holding.find({
+    userId,
+    contestId: options?.contestId ?? null,
+  });
   if (session) holdingsQuery.session(session);
   const holdings = await holdingsQuery;
   const symbols = holdings.map((h) => h.stockSymbol);
@@ -43,13 +47,21 @@ export async function getHoldingsForUser(
   });
 }
 
+export async function computePortfolioValueFromCash(
+  userId: string,
+  cashBalance: number,
+  options?: { session?: ClientSession; contestId?: string | null }
+) {
+  const holdings = await getHoldingsForUser(userId, options);
+  const holdingsValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
+  return cashBalance + holdingsValue;
+}
+
 export async function computePortfolioValue(
   user: IUser,
-  options?: { session?: ClientSession }
+  options?: { session?: ClientSession; contestId?: string | null }
 ) {
-  const holdings = await getHoldingsForUser(user._id.toString(), options);
-  const holdingsValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
-  return user.cashBalance + holdingsValue;
+  return computePortfolioValueFromCash(user._id.toString(), user.cashBalance, options);
 }
 
 export async function refreshUserPortfolioValue(
@@ -62,8 +74,27 @@ export async function refreshUserPortfolioValue(
   return total;
 }
 
+export async function refreshContestAccountPortfolioValue(
+  account: IContestAccount,
+  options?: { session?: ClientSession }
+) {
+  const total = await computePortfolioValueFromCash(
+    account.userId.toString(),
+    account.cashBalance,
+    { ...options, contestId: account.contestId.toString() }
+  );
+  account.totalPortfolioValue = total;
+  await account.save({ session: options?.session });
+  return total;
+}
+
 export function getRoiPercent(totalValue: number) {
   return ((totalValue - INITIAL_VIRTUAL_CASH) / INITIAL_VIRTUAL_CASH) * 100;
+}
+
+export function getRoiPercentForBalance(totalValue: number, startingBalance: number) {
+  if (!startingBalance) return 0;
+  return ((totalValue - startingBalance) / startingBalance) * 100;
 }
 
 export function getAllocationBySector(

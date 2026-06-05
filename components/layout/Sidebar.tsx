@@ -7,6 +7,7 @@ import {
   BriefcaseBusiness,
   ChartCandlestick,
   LayoutDashboard,
+  ListOrdered,
   LogOut,
   Menu,
   Trophy,
@@ -19,7 +20,8 @@ const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Market", href: "/market", icon: ChartCandlestick },
   { name: "Portfolio", href: "/portfolio", icon: BriefcaseBusiness },
-  { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
+  { name: "Leaderboard", href: "/leaderboard", icon: ListOrdered },
+  { name: "Contests", href: "/contests", icon: Trophy },
   { name: "Profile", href: "/profile", icon: User },
 ];
 

@@ -7,6 +7,7 @@ const protectedPaths = [
   "/market",
   "/portfolio",
   "/leaderboard",
+  "/contests",
   "/profile",
 ];
 
@@ -57,6 +58,7 @@ export const config = {
     "/market/:path*",
     "/portfolio/:path*",
     "/leaderboard/:path*",
+    "/contests/:path*",
     "/profile/:path*",
     "/login",
     "/register",

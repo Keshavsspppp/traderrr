@@ -6,6 +6,7 @@ import {
   BriefcaseBusiness,
   ChartCandlestick,
   LayoutDashboard,
+  ListOrdered,
   Trophy,
   User,
 } from "lucide-react";
@@ -14,7 +15,8 @@ const items = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
   { name: "Market", href: "/market", icon: ChartCandlestick },
   { name: "Portfolio", href: "/portfolio", icon: BriefcaseBusiness },
-  { name: "Ranks", href: "/leaderboard", icon: Trophy },
+  { name: "Ranks", href: "/leaderboard", icon: ListOrdered },
+  { name: "Contests", href: "/contests", icon: Trophy },
   { name: "Profile", href: "/profile", icon: User },
 ];
 

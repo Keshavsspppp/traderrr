@@ -18,10 +18,12 @@ export async function createNotification(input: {
   });
 }
 
-export async function getUserNotifications(userId: string, limit = 20) {
-  return Notification.find({ userId })
-    .sort({ createdAt: -1 })
-    .limit(limit);
+export async function getUserNotifications(userId: string, limit?: number) {
+  const query = Notification.find({ userId }).sort({ createdAt: -1 });
+  if (typeof limit === "number") {
+    query.limit(limit);
+  }
+  return query;
 }
 
 export async function getUnreadCount(userId: string) {

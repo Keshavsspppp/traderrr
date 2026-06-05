@@ -5,10 +5,12 @@ import { apiHandler, AppError } from "@/lib/errors";
 import { orderSchema } from "@/lib/validations/order";
 import { getUserOrders, placeOrder } from "@/services/order.service";
 
-export const GET = apiHandler(async () => {
+export const GET = apiHandler(async (req) => {
   await connectDB();
   const user = await requireUser();
-  const orders = await getUserOrders(user._id.toString());
+  const url = new URL(req.url);
+  const contestId = url.searchParams.get("contestId");
+  const orders = await getUserOrders(user._id.toString(), contestId);
   return NextResponse.json({ orders });
 });
 

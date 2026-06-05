@@ -5,6 +5,7 @@ export type OrderStatus = "PENDING" | "FILLED" | "CANCELLED";
 
 export interface IPendingOrder extends Document {
   userId: Types.ObjectId;
+  contestId?: Types.ObjectId | null;
   stockSymbol: string;
   quantity: number;
   type: "BUY" | "SELL";
@@ -18,6 +19,7 @@ export interface IPendingOrder extends Document {
 const PendingOrderSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    contestId: { type: Schema.Types.ObjectId, ref: "Contest", default: null },
     stockSymbol: { type: String, required: true },
     quantity: { type: Number, required: true, min: 1 },
     type: { type: String, enum: ["BUY", "SELL"], required: true },
@@ -38,8 +40,8 @@ const PendingOrderSchema = new Schema(
   { timestamps: true }
 );
 
-PendingOrderSchema.index({ userId: 1, status: 1 });
-PendingOrderSchema.index({ status: 1, stockSymbol: 1 });
+PendingOrderSchema.index({ userId: 1, contestId: 1, status: 1 });
+PendingOrderSchema.index({ status: 1, contestId: 1, stockSymbol: 1 });
 
 export default mongoose.models.PendingOrder ||
   mongoose.model<IPendingOrder>("PendingOrder", PendingOrderSchema);

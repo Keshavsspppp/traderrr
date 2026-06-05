@@ -7,6 +7,7 @@ export const orderSchema = z
     type: z.enum(["BUY", "SELL"]),
     orderType: z.enum(["MARKET", "LIMIT", "STOP_LOSS"]),
     limitPrice: z.number().positive().optional(),
+    contestId: z.string().min(1).optional(),
   })
   .refine(
     (data) =>

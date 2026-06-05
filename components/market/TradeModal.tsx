@@ -8,6 +8,7 @@ interface TradeModalProps {
   open: boolean;
   symbol: string;
   price: number;
+  contestId?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -18,6 +19,7 @@ export default function TradeModal({
   open,
   symbol,
   price,
+  contestId,
   onClose,
   onSuccess,
 }: TradeModalProps) {
@@ -44,6 +46,7 @@ export default function TradeModal({
           type,
           orderType,
           limitPrice: orderType === "MARKET" ? undefined : limitPrice,
+          contestId,
         }),
       });
       const json = await res.json();
