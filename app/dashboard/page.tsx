@@ -33,7 +33,7 @@ export default async function DashboardPage() {
           <div className="lg:col-span-2">
             <PortfolioGrowthChart chartData={data.chartData} />
           </div>
-          <AIInsightCard insight={data.aiInsight} />
+          <AIInsightCard />
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
           <DashboardWatchlist />

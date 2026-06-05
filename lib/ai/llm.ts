@@ -181,10 +181,24 @@ async function callOpenAI(
 }
 
 export function isLlmConfigured(): boolean {
-  return Boolean(
-    process.env.GROQ_API_KEY ||
-      process.env.GEMINI_API_KEY ||
-      process.env.ANTHROPIC_API_KEY ||
-      process.env.OPENAI_API_KEY
-  );
+  return getConfiguredLlmProvider() !== null;
+}
+
+export function getConfiguredLlmProvider(): LlmProvider | null {
+  const provider = (process.env.AI_PROVIDER ?? "auto").toLowerCase();
+  const groqKey = process.env.GROQ_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+
+  if (provider === "groq") return groqKey ? "groq" : null;
+  if (provider === "gemini") return geminiKey ? "gemini" : null;
+  if (provider === "anthropic") return anthropicKey ? "anthropic" : null;
+  if (provider === "openai") return openaiKey ? "openai" : null;
+
+  if (groqKey) return "groq";
+  if (geminiKey) return "gemini";
+  if (anthropicKey) return "anthropic";
+  if (openaiKey) return "openai";
+  return null;
 }

@@ -8,7 +8,6 @@ import {
   computePortfolioValue,
 } from "@/services/portfolio.service";
 import { getCurrentUserRank } from "@/services/leaderboard.service";
-import { generatePortfolioInsight } from "@/services/ai/mentor.service";
 import { INITIAL_VIRTUAL_CASH } from "@/lib/constants";
 
 export async function getDashboardData(userId: string) {
@@ -46,7 +45,6 @@ export async function getDashboardData(userId: string) {
       : [{ label: "Start", value: INITIAL_VIRTUAL_CASH }, { label: "Now", value: totalValue }];
 
   const rank = await getCurrentUserRank(userId, user.totalPortfolioValue);
-  const aiInsight = await generatePortfolioInsight(user);
 
   return {
     portfolio: {
@@ -68,6 +66,5 @@ export async function getDashboardData(userId: string) {
       date: t.createdAt,
     })),
     chartData,
-    aiInsight,
   };
 }

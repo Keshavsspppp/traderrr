@@ -1,6 +1,11 @@
 import Transaction from "@/models/Transaction";
 import type { IUser } from "@/models/User";
-import { callLlm, isLlmConfigured } from "@/lib/ai/llm";
+import { AppError } from "@/lib/errors";
+import {
+  callLlm,
+  getConfiguredLlmProvider,
+  isLlmConfigured,
+} from "@/lib/ai/llm";
 import { INITIAL_VIRTUAL_CASH } from "@/lib/constants";
 import {
   getAllocationBySector,
@@ -11,18 +16,28 @@ import {
 } from "@/services/portfolio.service";
 import type { AIInsight, AIRecommendation } from "@/types/ai-insight";
 
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const insightCache = new Map<string, { insight: AIInsight; at: number }>();
+
 const SYSTEM_PROMPT = `You are InvestArena's AI Portfolio Mentor — a concise, encouraging financial educator for Indian virtual stock traders.
-Analyze the user's portfolio data and respond ONLY with valid JSON (no markdown fences) matching this schema:
+
+Analyze the user's portfolio JSON and respond ONLY with valid JSON (no markdown, no extra keys) matching exactly:
 {
-  "healthScore": number 0-100,
+  "healthScore": <integer 0-100>,
   "riskLevel": "Low" | "Moderate" | "High",
-  "diversificationScore": number 0-100,
-  "summary": "2-3 sentence personalized overview",
+  "diversificationScore": <integer 0-100>,
+  "summary": "<2-3 sentences, mention the investor by first name when natural>",
   "recommendations": [
-    { "priority": "LOW"|"MEDIUM"|"HIGH", "title": "short title", "message": "actionable advice" }
+    { "priority": "LOW"|"MEDIUM"|"HIGH", "title": "<short>", "message": "<actionable advice>" }
   ]
 }
-Give 2-4 recommendations. Reference specific holdings/sectors when possible. This is virtual money for learning — be educational, not alarmist.`;
+
+Rules:
+- Give 2-4 recommendations referencing specific symbols/sectors from the data when available.
+- healthScore and diversificationScore must be integers.
+- This is virtual money for learning — be educational, not alarmist.`;
+
+const REPAIR_PROMPT = `Your previous response was not valid JSON matching the required schema. Reply with ONLY the corrected JSON object — no markdown, no commentary.`;
 
 function ruleBasedInsight(
   holdings: Awaited<ReturnType<typeof getHoldingsForUser>>,
@@ -124,19 +139,30 @@ function parseLlmInsight(
     ) {
       return null;
     }
+
+    const riskLevel =
+      parsed.riskLevel === "Low" ||
+      parsed.riskLevel === "Moderate" ||
+      parsed.riskLevel === "High"
+        ? parsed.riskLevel
+        : "Moderate";
+
     return {
       healthScore: Math.min(100, Math.max(0, Math.round(parsed.healthScore))),
-      riskLevel: parsed.riskLevel ?? "Moderate",
+      riskLevel,
       diversificationScore: Math.min(
         100,
         Math.max(0, Math.round(parsed.diversificationScore ?? 50))
       ),
-      summary: parsed.summary,
+      summary: parsed.summary.trim(),
       recommendations: Array.isArray(parsed.recommendations)
         ? parsed.recommendations.slice(0, 4).map((r) => ({
-            priority: r.priority ?? "MEDIUM",
-            title: r.title ?? "Tip",
-            message: r.message ?? "",
+            priority:
+              r.priority === "LOW" || r.priority === "HIGH"
+                ? r.priority
+                : "MEDIUM",
+            title: r.title?.trim() || "Tip",
+            message: r.message?.trim() || "",
           }))
         : [],
       source: provider,
@@ -146,10 +172,45 @@ function parseLlmInsight(
   }
 }
 
+async function callMentorLlm(userPrompt: string): Promise<AIInsight> {
+  const result = await callLlm(SYSTEM_PROMPT, userPrompt);
+  if (!result?.content) {
+    throw new AppError(
+      "AI mentor is temporarily unavailable. Check your API key and try again.",
+      503,
+      "LLM_UNAVAILABLE"
+    );
+  }
+
+  let insight = parseLlmInsight(result.content, result.provider);
+  if (insight) return insight;
+
+  const repair = await callLlm(
+    SYSTEM_PROMPT,
+    `${userPrompt}\n\n${REPAIR_PROMPT}\n\nInvalid response was:\n${result.content.slice(0, 1500)}`
+  );
+  if (repair?.content) {
+    insight = parseLlmInsight(repair.content, repair.provider);
+    if (insight) return insight;
+  }
+
+  throw new AppError(
+    "AI mentor returned an invalid response. Please refresh to try again.",
+    502,
+    "LLM_PARSE_ERROR"
+  );
+}
+
 export async function generatePortfolioInsight(
-  user: IUser
+  user: IUser,
+  options?: { refresh?: boolean }
 ): Promise<AIInsight> {
   const userId = user._id.toString();
+  const cached = insightCache.get(userId);
+  if (!options?.refresh && cached && Date.now() - cached.at < CACHE_TTL_MS) {
+    return cached.insight;
+  }
+
   const holdings = await getHoldingsForUser(userId);
   const totalValue = await computePortfolioValue(user);
   const roi = getRoiPercent(totalValue);
@@ -157,17 +218,15 @@ export async function generatePortfolioInsight(
   const { topSector, concentration } = getSectorConcentration(allocation);
   const cashRatio = totalValue > 0 ? user.cashBalance / totalValue : 1;
 
-  const fallback = ruleBasedInsight(
-    holdings,
-    allocation,
-    concentration,
-    topSector,
-    roi,
-    cashRatio
-  );
-
   if (!isLlmConfigured()) {
-    return fallback;
+    return ruleBasedInsight(
+      holdings,
+      allocation,
+      concentration,
+      topSector,
+      roi,
+      cashRatio
+    );
   }
 
   const recentTrades = await Transaction.find({ userId: user._id })
@@ -213,8 +272,16 @@ export async function generatePortfolioInsight(
     2
   );
 
-  const result = await callLlm(SYSTEM_PROMPT, userPrompt);
-  if (!result) return fallback;
+  const insight = await callMentorLlm(userPrompt);
+  insightCache.set(userId, { insight, at: Date.now() });
+  return insight;
+}
 
-  return parseLlmInsight(result.content, result.provider) ?? fallback;
+export function getMentorStatus() {
+  const configured = isLlmConfigured();
+  return {
+    configured,
+    provider: configured ? getConfiguredLlmProvider() : null,
+    mode: configured ? "llm" : "rules",
+  };
 }
