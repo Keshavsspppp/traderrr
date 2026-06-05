@@ -3,6 +3,8 @@ import Stock from "@/models/Stock";
 import PendingOrder, { type IPendingOrder } from "@/models/PendingOrder";
 import { AppError } from "@/lib/errors";
 import { executeTrade } from "@/services/trade.service";
+import { createNotification } from "@/services/notification.service";
+import { formatCurrency } from "@/lib/format";
 import type { OrderInput } from "@/lib/validations/order";
 
 function shouldFill(order: IPendingOrder, currentPrice: number): boolean {
@@ -46,6 +48,14 @@ export async function placeOrder(user: IUser, input: OrderInput) {
   if (filled) {
     return { order: filled, immediate: true };
   }
+
+  await createNotification({
+    userId: user._id,
+    type: "order",
+    title: `${input.orderType.replace("_", " ")} order placed`,
+    message: `${input.type} ${input.quantity} × ${input.symbol} @ ${formatCurrency(input.limitPrice!)}`,
+    link: "/portfolio",
+  });
 
   return { order, immediate: false };
 }

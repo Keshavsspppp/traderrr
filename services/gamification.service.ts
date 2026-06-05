@@ -2,6 +2,7 @@ import User, { type IUser } from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { ACHIEVEMENT_DEFS, LEVEL_XP_THRESHOLDS } from "@/lib/constants";
 import { getRoiPercent } from "@/services/portfolio.service";
+import { createNotification } from "@/services/notification.service";
 
 export function calculateLevelFromXp(xp: number): number {
   let level = 1;
@@ -54,6 +55,14 @@ export async function processAchievements(user: IUser) {
       user.achievements.push(check.id);
       xpGain += def.xpReward;
       earned.push(check.id);
+
+      await createNotification({
+        userId: user._id,
+        type: "achievement",
+        title: "Achievement unlocked",
+        message: `${def.title} — +${def.xpReward} XP`,
+        link: "/profile",
+      });
     }
   }
 

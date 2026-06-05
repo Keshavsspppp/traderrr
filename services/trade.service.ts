@@ -10,6 +10,8 @@ import {
   computePortfolioValue,
 } from "@/services/portfolio.service";
 import { awardTradeXp } from "@/services/gamification.service";
+import { createNotification } from "@/services/notification.service";
+import { formatCurrency } from "@/lib/format";
 import type { TradeInput } from "@/lib/validations/trade";
 
 export async function executeTrade(user: IUser, input: TradeInput) {
@@ -85,6 +87,14 @@ export async function executeTrade(user: IUser, input: TradeInput) {
   });
 
   await awardTradeXp(user);
+
+  await createNotification({
+    userId,
+    type: "trade",
+    title: `${type} order executed`,
+    message: `${quantity} × ${symbol} at ${formatCurrency(price)}`,
+    link: "/portfolio",
+  });
 
   const updatedUser = await User.findById(userId);
   return {

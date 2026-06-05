@@ -1,7 +1,8 @@
 "use client";
 
-import { Bell, Search, TrendingUp } from "lucide-react";
+import { Search, TrendingUp } from "lucide-react";
 import { useUser } from "@/components/providers/UserProvider";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 export default function Navbar() {
   const { user } = useUser();
@@ -31,14 +32,7 @@ export default function Navbar() {
             <span className="text-sm">Market Open</span>
           </div>
 
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative rounded-xl border border-white/10 bg-white/5 p-2.5 hover:bg-white/10 sm:p-3"
-          >
-            <Bell size={18} className="sm:h-5 sm:w-5" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-green-400" />
-          </button>
+          <NotificationBell />
 
           <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-2 py-1.5 sm:gap-3 sm:px-4 sm:py-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500 text-sm font-bold text-black sm:h-10 sm:w-10 sm:text-base">
